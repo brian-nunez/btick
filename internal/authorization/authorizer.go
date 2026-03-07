@@ -53,21 +53,29 @@ func NewAuthorizer() (*Authorizer, error) {
 	registry.Register("keys_read_allowed", scopeAndTenantPredicate("keys:read"))
 	registry.Register("keys_write_allowed", scopeAndTenantPredicate("keys:write"))
 
+	tenantScopedAllows := []string{
+		ActionJobsRead + ":jobs_read_allowed",
+		ActionJobsWrite + ":jobs_write_allowed",
+		ActionJobsDelete + ":jobs_delete_allowed",
+		ActionJobsTrigger + ":jobs_trigger_allowed",
+		ActionRunsRead + ":runs_read_allowed",
+		ActionKeysRead + ":keys_read_allowed",
+		ActionKeysWrite + ":keys_write_allowed",
+	}
+
 	cfg, err := baccess.LoadConfigFromMap(map[string]any{
 		"policies": map[string]any{
 			"admin": map[string]any{
-				"allow": []string{"*"},
+				"allow": tenantScopedAllows,
+			},
+			"user": map[string]any{
+				"allow": tenantScopedAllows,
 			},
 			"api_key": map[string]any{
-				"allow": []string{
-					ActionJobsRead + ":jobs_read_allowed",
-					ActionJobsWrite + ":jobs_write_allowed",
-					ActionJobsDelete + ":jobs_delete_allowed",
-					ActionJobsTrigger + ":jobs_trigger_allowed",
-					ActionRunsRead + ":runs_read_allowed",
-					ActionKeysRead + ":keys_read_allowed",
-					ActionKeysWrite + ":keys_write_allowed",
-				},
+				"allow": tenantScopedAllows,
+			},
+			"system_admin": map[string]any{
+				"allow": []string{"*"},
 			},
 		},
 	})
@@ -105,12 +113,14 @@ func scopeAndTenantPredicate(requiredScope string) baccess.Predicate[baccess.Acc
 		if req.Subject.principal == nil {
 			return false
 		}
+		if req.Subject.principal.Kind == auth.PrincipalKindSystem {
+			return true
+		}
 		if !slices.Contains(req.Subject.principal.Scopes, requiredScope) {
 			return false
 		}
-
 		if req.Resource.TenantID == nil || req.Subject.principal.TenantID == nil {
-			return true
+			return false
 		}
 
 		return *req.Resource.TenantID == *req.Subject.principal.TenantID

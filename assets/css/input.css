@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+@source "../../views/**/*.templ";
+@source "../../views/**/*.go";
+@source "../../internal/**/*.go";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -139,5 +142,131 @@
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+  }
+}
+
+@layer components {
+  .auth-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1rem;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(19, 127, 236, 0.14), transparent 32%),
+      linear-gradient(180deg, #f8fafc, #f1f5f9);
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 28rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    background: #ffffff;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(2, 6, 23, 0.05);
+  }
+
+  .auth-logo {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.625rem;
+    background: #137fec;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+  }
+
+  .auth-title {
+    color: #0f172a;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .auth-subtitle {
+    color: #64748b;
+    font-size: 0.875rem;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .auth-error {
+    margin-bottom: 1rem;
+    border: 1px solid #fecaca;
+    border-radius: 0.5rem;
+    background: #fef2f2;
+    color: #b91c1c;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .auth-label {
+    display: block;
+    color: #334155;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .auth-input {
+    height: 2.75rem;
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    background: #f8fafc;
+    padding: 0 0.75rem;
+    outline: none;
+  }
+
+  .auth-input:focus {
+    border-color: #137fec;
+    box-shadow: 0 0 0 3px rgba(19, 127, 236, 0.2);
+  }
+
+  .auth-submit {
+    height: 2.75rem;
+    width: 100%;
+    border: 0;
+    border-radius: 0.5rem;
+    background: #137fec;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .auth-submit:hover {
+    background: #0f72d6;
+  }
+
+  .auth-secondary {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 1.25rem;
+  }
+
+  .auth-link {
+    color: #137fec;
+    font-weight: 600;
+  }
+
+  .auth-link:hover {
+    text-decoration: underline;
+  }
+
+  .auth-back {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.875rem;
   }
 }

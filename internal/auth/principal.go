@@ -39,9 +39,13 @@ func NewAdminPrincipal(subjectID string, kind PrincipalKind) *Principal {
 	if subjectID == "" {
 		subjectID = "admin"
 	}
+	roles := []string{"admin"}
+	if kind == PrincipalKindSystem {
+		roles = []string{"system_admin"}
+	}
 	return &Principal{
 		SubjectID: subjectID,
-		Roles:     []string{"admin"},
+		Roles:     roles,
 		Scopes:    DefaultAdminScopes(),
 		Kind:      kind,
 	}

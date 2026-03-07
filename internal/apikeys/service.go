@@ -120,13 +120,13 @@ func (s *Service) List(ctx context.Context, principal *auth.Principal) ([]sqlc.A
 		return nil, err
 	}
 
-	if principal.TenantID == nil {
+	if principal.Kind == auth.PrincipalKindSystem && principal.TenantID == nil {
 		return keys, nil
 	}
 
 	filtered := make([]sqlc.APIKey, 0, len(keys))
 	for _, key := range keys {
-		if key.TenantID == nil || *key.TenantID == *principal.TenantID {
+		if key.TenantID != nil && principal.TenantID != nil && *key.TenantID == *principal.TenantID {
 			filtered = append(filtered, key)
 		}
 	}

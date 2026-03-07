@@ -4,6 +4,7 @@ sql:
     schema:
       - "migrations/000001_init.sql"
       - "migrations/000002_users.sql"
+      - "migrations/000003_tenant_isolation_backfill.sql"
     queries:
       - "queries"
     gen:

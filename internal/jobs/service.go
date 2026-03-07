@@ -142,13 +142,13 @@ func (s *Service) List(ctx context.Context, principal *auth.Principal) ([]sqlc.J
 		return nil, err
 	}
 
-	if principal.TenantID == nil {
+	if principal.Kind == auth.PrincipalKindSystem && principal.TenantID == nil {
 		return jobs, nil
 	}
 
 	filtered := make([]sqlc.Job, 0, len(jobs))
 	for _, job := range jobs {
-		if job.TenantID == nil || *job.TenantID == *principal.TenantID {
+		if job.TenantID != nil && principal.TenantID != nil && *job.TenantID == *principal.TenantID {
 			filtered = append(filtered, job)
 		}
 	}

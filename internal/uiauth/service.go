@@ -83,7 +83,7 @@ func (s *Service) Register(ctx context.Context, email string, password string) (
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
-	rolesJSON, err := json.Marshal([]string{"admin"})
+	rolesJSON, err := json.Marshal([]string{"user"})
 	if err != nil {
 		return nil, fmt.Errorf("marshal roles: %w", err)
 	}
@@ -91,6 +91,7 @@ func (s *Service) Register(ctx context.Context, email string, password string) (
 	if err != nil {
 		return nil, fmt.Errorf("marshal scopes: %w", err)
 	}
+	tenantID := uuid.New()
 
 	user, err := s.queries.CreateUser(ctx, sqlc.CreateUserParams{
 		ID:           uuid.New(),
@@ -98,7 +99,7 @@ func (s *Service) Register(ctx context.Context, email string, password string) (
 		PasswordHash: string(passwordHash),
 		Roles:        rolesJSON,
 		Scopes:       scopesJSON,
-		TenantID:     nil,
+		TenantID:     &tenantID,
 	})
 	if err != nil {
 		if isUniqueEmailViolation(err) {
@@ -222,6 +223,9 @@ func (s *Service) PrincipalFromRequest(request *http.Request) (*auth.Principal, 
 		Roles:     claims.Roles,
 		Scopes:    claims.Scopes,
 		Kind:      kind,
+	}
+	if principal.Kind != auth.PrincipalKindSystem && principal.TenantID == nil {
+		return nil, false
 	}
 	return principal, true
 }

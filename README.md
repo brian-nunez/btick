@@ -1,73 +1,161 @@
-# Go, Echo, Templ, Tailwind Starter Template
+# BTick Scheduler Service
 
-A fast, minimal starter template for building server-rendered web applications in Go using Echo, Templ, TailwindCSS, and Templ UI.
+BTick is a generic API-driven scheduler service for recurring HTTP jobs.
 
-This project gives you a solid foundation to build from — with preconfigured defaults, an opinionated folder structure, and server-rendered HTML out of the box.
+It provides:
 
----
+- Scheduler API (`cmd/scheduler-api`):
+  - JSON API under `/api/v1`
+  - server-rendered UI with `templ` + `templui` + `tailwindcss` + `htmx`
+  - API key management and API key auth
+- Scheduler Worker (`cmd/scheduler-worker`):
+  - Postgres polling for due jobs
+  - safe multi-worker claim semantics
+  - HTTP execution with retries and run history persistence
+  - execution through `task-orchestration`
 
-## Features
+## Architecture
 
-- Fast startup, zero config needed
-- Opinionated folder structure with `/cmd` and `/internal`
-- Templ components using [`templ`](https://templ.guide)
-- Utility-first styling with TailwindCSS
-- Templ UI support preconfigured (All components are installed)
-- Clean routing with Echo (My favorite Go web framework)
-- Centralized error handling
-- Graceful shutdown
-- Makefile-driven dev workflow
+- Control plane: API service
+- Execution plane: Worker service
+- Source of truth: Postgres (`jobs`, `job_runs`, `api_keys`)
+- Scheduling model: persisted `next_run_at` + cron expression
+- No in-memory timer dependence
 
----
+## Required Libraries
 
-## Tool Links
+- [`github.com/brian-nunez/task-orchestration`](https://github.com/brian-nunez/task-orchestration)
+- [`github.com/brian-nunez/baccess`](https://github.com/brian-nunez/baccess)
 
-- **[Echo](https://echo.labstack.com/)**: A high-performance, minimalist web framework for Go.
-- **[Templ](https://templ.guide/)**: A Go HTML templating engine that allows you to build reusable components.
-- **[TailwindCSS](https://tailwindcss.com/)**: A utility-first CSS framework for rapid UI development.
-- **[Templ UI](https://templui.io/)**: A collection of prebuilt components for Templ, making it easy to build beautiful UIs.
-- **[Air](https://github.com/air-verse/air)**: A live reloading tool for Go applications, making development faster and smoother.
+## Project Layout
 
-
-## Project Structure
-
-``` If you're actually looking at this, message me if you do anything cool with this template! xD
-├── cmd/                # Entrypoint (main.go)
-├── internal/           # Application logic
-│   ├── handlers/       # HTTP handlers
-│   │   ├── errors/     # Centralized error response logic
-│   │   └── v1/         # Versioned routing
-│   └── httpserver/     # Server wiring & middleware
-├── .templui.json       # Templ UI config
-├── Makefile            # Dev commands
+```text
+cmd/
+  scheduler-api/
+  scheduler-worker/
+internal/
+  apikeys/
+  auth/
+  authorization/
+  config/
+  db/
+  handlers/
+    errors/
+    v1/
+  httpserver/
+  jobs/
+  runs/
+  scheduler/
+  worker/
+migrations/
+queries/
+sdk/
+  go/
+    scheduler/
+views/
 ```
 
----
+## Environment Variables
 
-## Get Started
+Shared:
 
-### 1. Clone the repo
+- `DATABASE_URL` (required)
+
+API:
+
+- `PORT` (default `8080`)
+- `STATIC_ASSETS_PATH` (default `./assets`)
+
+Worker:
+
+- `WORKER_ID` (default `scheduler-worker-1`)
+- `WORKER_CONCURRENCY` (default `4`)
+- `WORKER_POLL_INTERVAL_MS` (default `2000`)
+- `WORKER_STALE_CLAIM_MINUTES` (default `5`)
+- `WORKER_MAX_CLAIMS_PER_TICK` (default `20`)
+- `WORKER_TASK_LOG_PATH` (default `./logs/tasks`)
+- `WORKER_TASK_STATE_DB_PATH` (default `./data/task_orchestration.db`)
+- `WORKER_HTTP_TIMEOUT_SECONDS` (default `90`)
+
+## Run Locally
+
+1. Set `DATABASE_URL`.
+2. Start API:
 
 ```bash
-git clone https://github.com/brian-nunez/go-echo-templ-tailwind-template.git
-cd go-echo-templ-tailwind-template
+go run ./cmd/scheduler-api
 ```
 
-### 2. Install dependencies
-
-* Go 1.22+
-* templ
-* tailwindcss
-* air (for live reloading)
-
-### 3. Run in dev mode
+3. Start worker:
 
 ```bash
-make dev
+go run ./cmd/scheduler-worker
 ```
 
-## Reach out if you have questions or just want to chat!
+Migrations run automatically on startup.
 
-- [GitHub](https://www.github.com/brian-nunez)
-- [LinkedIn](https://www.linkedin.com/in/brianjnunez)
+## API Endpoints
 
+Health:
+
+- `GET /api/v1/health`
+- `GET /healthz`
+- `GET /readyz`
+
+Jobs:
+
+- `POST /api/v1/jobs`
+- `GET /api/v1/jobs`
+- `GET /api/v1/jobs/{jobId}`
+- `PATCH /api/v1/jobs/{jobId}`
+- `DELETE /api/v1/jobs/{jobId}`
+- `POST /api/v1/jobs/{jobId}/pause`
+- `POST /api/v1/jobs/{jobId}/resume`
+- `POST /api/v1/jobs/{jobId}/trigger`
+
+Runs:
+
+- `GET /api/v1/jobs/{jobId}/runs`
+- `GET /api/v1/runs/{runId}`
+
+API Keys:
+
+- `POST /api/v1/api-keys`
+- `GET /api/v1/api-keys`
+- `POST /api/v1/api-keys/{keyId}/revoke`
+
+## Authentication
+
+Protected API endpoints expect:
+
+```http
+Authorization: Bearer <api-key>
+```
+
+Keys are generated once and only `key_prefix` + secure hash are stored.
+
+## UI Routes
+
+- `/ui/jobs`
+- `/ui/jobs/new`
+- `/ui/jobs/{jobId}`
+- `/ui/jobs/{jobId}/edit`
+- `/ui/jobs/{jobId}/runs`
+- `/ui/runs/{runId}`
+- `/ui/api-keys`
+- `/ui/api-keys/new`
+
+## SDK
+
+Go SDK lives at:
+
+- `sdk/go/scheduler`
+
+See [`sdk/go/scheduler/README.md`](./sdk/go/scheduler/README.md) for examples.
+
+## SQLC + Migrations
+
+- SQL schema migration files: `migrations/`
+- Query contracts: `queries/`
+- SQLC config: `sqlc.yaml`
+- Query implementation package: `internal/db/sqlc`

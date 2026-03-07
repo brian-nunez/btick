@@ -1,0 +1,29 @@
+package scheduler
+
+templ Layout(title string) {
+	<html lang="en" class="h-full">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title } - BTick Scheduler</title>
+			<link rel="stylesheet" href="/assets/css/output.css"/>
+			<script src="/assets/js/lib/htmx.js"></script>
+		</head>
+		<body class="min-h-full bg-slate-950 text-slate-100 antialiased">
+			<div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_20%,rgba(14,165,233,0.20),transparent_35%),radial-gradient(circle_at_85%_10%,rgba(34,197,94,0.18),transparent_32%),linear-gradient(180deg,#020617,#0f172a)]"></div>
+			<header class="border-b border-slate-800/80 bg-slate-900/40 backdrop-blur">
+				<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+					<a href="/ui/jobs" class="text-xl font-semibold tracking-tight text-cyan-300">BTick Scheduler</a>
+					<nav class="flex items-center gap-4 text-sm text-slate-300">
+						<a class="rounded px-2 py-1 hover:bg-slate-800 hover:text-white" href="/ui/jobs">Jobs</a>
+						<a class="rounded px-2 py-1 hover:bg-slate-800 hover:text-white" href="/ui/api-keys">API Keys</a>
+						<a class="rounded px-2 py-1 hover:bg-slate-800 hover:text-white" href="/api/v1/health">API Health</a>
+					</nav>
+				</div>
+			</header>
+			<main class="mx-auto w-full max-w-7xl px-6 py-8">
+				{ children... }
+			</main>
+		</body>
+	</html>
+}

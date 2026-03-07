@@ -1,0 +1,431 @@
+package scheduler
+
+import (
+	"fmt"
+	"strings"
+
+	badge "github.com/brian-nunez/go-echo-starter-template/views/components/badge"
+	button "github.com/brian-nunez/go-echo-starter-template/views/components/button"
+)
+
+templ JobsPage(data JobsPageData) {
+	@Layout(data.Title) {
+		<section class="space-y-6">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<div>
+					<h1 class="text-3xl font-bold tracking-tight text-white">Scheduled Jobs</h1>
+					<p class="mt-1 text-sm text-slate-300">Manage recurring HTTP jobs and manual triggers.</p>
+				</div>
+				<div class="flex gap-2">
+					@button.Button(button.Props{Href: "/ui/api-keys", Variant: button.VariantOutline}) {
+						API Keys
+					}
+					@button.Button(button.Props{Href: "/ui/jobs/new"}) {
+						Create Job
+					}
+				</div>
+			</div>
+			<div class="rounded-xl border border-slate-800 bg-slate-900/70 shadow-2xl shadow-slate-950/40">
+				<div class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+					<h2 class="text-sm font-medium text-slate-200">Jobs</h2>
+					<span class="text-xs text-slate-400">Auto-refreshing every 20s</span>
+				</div>
+				<div id="jobs-table" hx-get="/ui/partials/jobs-table" hx-trigger="load, every 20s" hx-swap="innerHTML">
+					@JobsTable(JobsTableData{Jobs: data.Jobs})
+				</div>
+			</div>
+		</section>
+	}
+}
+
+templ JobsTable(data JobsTableData) {
+	<div class="overflow-x-auto">
+		<table class="min-w-full text-left text-sm">
+			<thead class="bg-slate-900/80 text-xs uppercase tracking-wide text-slate-400">
+				<tr>
+					<th class="px-4 py-3">Name</th>
+					<th class="px-4 py-3">Method</th>
+					<th class="px-4 py-3">Schedule</th>
+					<th class="px-4 py-3">Next Run</th>
+					<th class="px-4 py-3">Status</th>
+					<th class="px-4 py-3 text-right">Actions</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y divide-slate-800 text-slate-200">
+				for _, job := range data.Jobs {
+					<tr class="transition hover:bg-slate-800/40">
+						<td class="px-4 py-3">
+							<a class="font-medium text-cyan-300 hover:text-cyan-200" href={ fmt.Sprintf("/ui/jobs/%s", job.ID) }>{ job.Name }</a>
+							<div class="mt-1 text-xs text-slate-400">{ job.URL }</div>
+						</td>
+						<td class="px-4 py-3 text-slate-300">{ job.Method }</td>
+						<td class="px-4 py-3 text-slate-300">{ job.CronExpression }<div class="text-xs text-slate-500">{ job.Timezone }</div></td>
+						<td class="px-4 py-3 text-slate-300">{ FormatTime(job.NextRunAt) }</td>
+						<td class="px-4 py-3">
+							if job.Enabled {
+								@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+									Enabled
+								}
+							} else {
+								@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+									Paused
+								}
+							}
+						</td>
+						<td class="px-4 py-3">
+							<div class="flex justify-end gap-2">
+								<form method="post" action={ fmt.Sprintf("/ui/jobs/%s/trigger", job.ID) }>
+									<button class="rounded bg-cyan-600 px-2 py-1 text-xs font-semibold text-white hover:bg-cyan-500" type="submit">Trigger</button>
+								</form>
+								if job.Enabled {
+									<form method="post" action={ fmt.Sprintf("/ui/jobs/%s/pause", job.ID) } hx-post={ fmt.Sprintf("/ui/jobs/%s/pause", job.ID) } hx-target="#jobs-table" hx-swap="innerHTML">
+										<button class="rounded border border-amber-500/60 px-2 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-500/10" type="submit">Pause</button>
+									</form>
+								} else {
+									<form method="post" action={ fmt.Sprintf("/ui/jobs/%s/resume", job.ID) } hx-post={ fmt.Sprintf("/ui/jobs/%s/resume", job.ID) } hx-target="#jobs-table" hx-swap="innerHTML">
+										<button class="rounded border border-emerald-500/60 px-2 py-1 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/10" type="submit">Resume</button>
+									</form>
+								}
+								<a class="rounded border border-slate-700 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700/50" href={ fmt.Sprintf("/ui/jobs/%s/edit", job.ID) }>Edit</a>
+							</div>
+						</td>
+					</tr>
+				}
+				if len(data.Jobs) == 0 {
+					<tr>
+						<td colspan="6" class="px-4 py-10 text-center text-slate-400">No jobs configured yet.</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+templ JobFormPage(data JobFormPageData) {
+	@Layout(data.Title) {
+		<div class="mx-auto max-w-4xl space-y-6">
+			<div class="flex items-center justify-between">
+				<h1 class="text-3xl font-bold text-white">{ data.Title }</h1>
+				<a class="text-sm text-cyan-300 hover:text-cyan-200" href="/ui/jobs">Back to Jobs</a>
+			</div>
+			if data.Error != "" {
+				<div class="rounded border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">{ data.Error }</div>
+			}
+			<form method="post" action={ data.FormAction } class="space-y-4 rounded-xl border border-slate-800 bg-slate-900/70 p-6">
+				<div class="grid gap-4 md:grid-cols-2">
+					<label class="space-y-2">
+						<span class="text-sm text-slate-200">Job Name</span>
+						<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="name" value={ data.Job.Name } required/>
+					</label>
+					<label class="space-y-2">
+						<span class="text-sm text-slate-200">HTTP Method</span>
+						<select class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="method">
+							for _, m := range []string{"GET", "POST", "PUT", "PATCH", "DELETE"} {
+								<option value={ m } selected?={ strings.EqualFold(data.Job.Method, m) }>{ m }</option>
+							}
+						</select>
+					</label>
+				</div>
+				<label class="space-y-2 block">
+					<span class="text-sm text-slate-200">Target URL</span>
+					<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="url" value={ data.Job.URL } required/>
+				</label>
+				<div class="grid gap-4 md:grid-cols-2">
+					<label class="space-y-2">
+						<span class="text-sm text-slate-200">Cron Expression</span>
+						<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="cron_expression" value={ data.Job.CronExpression } required/>
+					</label>
+					<label class="space-y-2">
+						<span class="text-sm text-slate-200">Timezone (IANA)</span>
+						<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="timezone" value={ data.Job.Timezone } required/>
+					</label>
+				</div>
+				<div class="grid gap-4 md:grid-cols-2">
+					<label class="space-y-2">
+						<span class="text-sm text-slate-200">Retry Max</span>
+						<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" type="number" name="retry_max" min="0" value={ fmt.Sprintf("%d", data.Job.RetryMax) }/>
+					</label>
+					<label class="space-y-2">
+						<span class="text-sm text-slate-200">Timeout Seconds</span>
+						<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" type="number" name="timeout_seconds" min="1" value={ fmt.Sprintf("%d", data.Job.TimeoutSeconds) }/>
+					</label>
+				</div>
+				<label class="space-y-2 block">
+					<span class="text-sm text-slate-200">Headers JSON</span>
+					<textarea class="h-32 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="headers_json">{ data.Job.HeadersJSON }</textarea>
+				</label>
+				<label class="space-y-2 block">
+					<span class="text-sm text-slate-200">Body JSON (optional)</span>
+					<textarea class="h-40 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="body_json">{ data.Job.BodyJSON }</textarea>
+				</label>
+				<label class="inline-flex items-center gap-2 text-sm text-slate-200">
+					<input type="checkbox" name="enabled" checked?={ data.Job.Enabled } class="rounded border-slate-600 bg-slate-900 text-cyan-500"/>
+					Enabled
+				</label>
+				<div class="pt-2">
+					@button.Button(button.Props{Type: button.TypeSubmit}) {
+						{ data.SubmitLabel }
+					}
+				</div>
+			</form>
+		</div>
+	}
+}
+
+templ JobDetailPage(data JobDetailPageData) {
+	@Layout("Job Detail") {
+		<section class="space-y-6">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<div>
+					<h1 class="text-3xl font-bold text-white">{ data.Job.Name }</h1>
+					<p class="mt-1 text-sm text-slate-400">{ data.Job.Method } { data.Job.URL }</p>
+				</div>
+				<div class="flex gap-2">
+					@button.Button(button.Props{Href: fmt.Sprintf("/ui/jobs/%s/edit", data.Job.ID), Variant: button.VariantOutline}) {
+						Edit
+					}
+					<form method="post" action={ fmt.Sprintf("/ui/jobs/%s/trigger", data.Job.ID) }>
+						@button.Button(button.Props{Type: button.TypeSubmit}) {
+							Trigger Now
+						}
+					</form>
+				</div>
+			</div>
+			<div class="grid gap-4 md:grid-cols-3">
+				<div class="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+					<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-400">Schedule</h3>
+					<p class="mt-2 text-sm text-slate-100">{ data.Job.CronExpression }</p>
+					<p class="text-xs text-slate-400">Timezone: { data.Job.Timezone }</p>
+				</div>
+				<div class="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+					<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-400">Next Run</h3>
+					<p class="mt-2 text-sm text-slate-100">{ FormatTime(data.Job.NextRunAt) }</p>
+				</div>
+				<div class="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+					<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-400">Last Run</h3>
+					<p class="mt-2 text-sm text-slate-100">{ FormatTime(data.Job.LastRunAt) }</p>
+				</div>
+			</div>
+			<div class="rounded-xl border border-slate-800 bg-slate-900/70">
+				<div class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+					<h2 class="text-sm font-medium text-slate-200">Recent Runs</h2>
+					<a href={ fmt.Sprintf("/ui/jobs/%s/runs", data.Job.ID) } class="text-xs text-cyan-300 hover:text-cyan-200">View All</a>
+				</div>
+				<div class="overflow-x-auto">
+					<table class="min-w-full text-left text-sm">
+						<thead class="text-xs uppercase text-slate-400">
+							<tr>
+								<th class="px-4 py-3">Run</th>
+								<th class="px-4 py-3">Status</th>
+								<th class="px-4 py-3">Attempts</th>
+								<th class="px-4 py-3">Started</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-800 text-slate-200">
+							for _, run := range data.Runs {
+								<tr>
+									<td class="px-4 py-3"><a class="text-cyan-300 hover:text-cyan-200" href={ fmt.Sprintf("/ui/runs/%s", run.ID) }>{ run.ID }</a></td>
+									<td class="px-4 py-3">
+										if IsRunSuccess(run.Status) {
+											@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) { Success }
+										} else if IsRunFailure(run.Status) {
+											@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) { Failed }
+										} else {
+											@badge.Badge(badge.Props{Variant: badge.VariantOutline}) { { run.Status } }
+										}
+									</td>
+									<td class="px-4 py-3">{ fmt.Sprintf("%d", run.AttemptNumber) }</td>
+									<td class="px-4 py-3">{ FormatTimeValue(run.StartedAt) }</td>
+								</tr>
+							}
+							if len(data.Runs) == 0 {
+								<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">No runs yet.</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	}
+}
+
+templ JobRunsPage(data JobRunsPageData) {
+	@Layout("Job Runs") {
+		<section class="space-y-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<h1 class="text-3xl font-bold text-white">Runs: { data.Job.Name }</h1>
+					<p class="text-sm text-slate-400">Execution history for this job.</p>
+				</div>
+				<a class="text-sm text-cyan-300 hover:text-cyan-200" href={ fmt.Sprintf("/ui/jobs/%s", data.Job.ID) }>Back to Job</a>
+			</div>
+			<div class="rounded-xl border border-slate-800 bg-slate-900/70">
+				<div class="overflow-x-auto">
+					<table class="min-w-full text-left text-sm">
+						<thead class="text-xs uppercase text-slate-400">
+							<tr>
+								<th class="px-4 py-3">Run ID</th>
+								<th class="px-4 py-3">Type</th>
+								<th class="px-4 py-3">Status</th>
+								<th class="px-4 py-3">Attempts</th>
+								<th class="px-4 py-3">Response</th>
+								<th class="px-4 py-3">Started</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-800 text-slate-200">
+							for _, run := range data.Runs {
+								<tr>
+									<td class="px-4 py-3"><a class="text-cyan-300 hover:text-cyan-200" href={ fmt.Sprintf("/ui/runs/%s", run.ID) }>{ run.ID }</a></td>
+									<td class="px-4 py-3">{ strings.Title(run.TriggerType) }</td>
+									<td class="px-4 py-3">
+										if IsRunSuccess(run.Status) {
+											@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) { Success }
+										} else if IsRunFailure(run.Status) {
+											@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) { Failed }
+										} else {
+											@badge.Badge(badge.Props{Variant: badge.VariantOutline}) { { run.Status } }
+										}
+									</td>
+									<td class="px-4 py-3">{ fmt.Sprintf("%d", run.AttemptNumber) }</td>
+									<td class="px-4 py-3">{ run.ResponseStatus }</td>
+									<td class="px-4 py-3">{ FormatTimeValue(run.StartedAt) }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	}
+}
+
+templ RunDetailPage(data RunDetailPageData) {
+	@Layout("Run Detail") {
+		<section class="space-y-6">
+			<div class="flex items-center justify-between">
+				<h1 class="text-3xl font-bold text-white">Run { data.Run.ID }</h1>
+				<a class="text-sm text-cyan-300 hover:text-cyan-200" href={ fmt.Sprintf("/ui/jobs/%s/runs", data.Run.JobID) }>Back to Runs</a>
+			</div>
+			<div class="grid gap-4 md:grid-cols-2">
+				<div class="space-y-2 rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+					<h2 class="text-sm font-semibold uppercase tracking-wide text-slate-300">Request</h2>
+					<div class="text-sm text-slate-200">Method: { data.Run.RequestMethod }</div>
+					<div class="text-sm text-slate-200">URL: { data.Run.RequestURL }</div>
+					<div class="text-xs text-slate-400">Headers</div>
+					<pre class="overflow-x-auto rounded bg-slate-950 p-3 text-xs text-slate-200">{ data.Run.RequestHeaders }</pre>
+					<div class="text-xs text-slate-400">Body</div>
+					<pre class="overflow-x-auto rounded bg-slate-950 p-3 text-xs text-slate-200">{ data.Run.RequestBody }</pre>
+				</div>
+				<div class="space-y-2 rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+					<h2 class="text-sm font-semibold uppercase tracking-wide text-slate-300">Response</h2>
+					<div class="text-sm text-slate-200">Status: { data.Run.ResponseStatus }</div>
+					<div class="text-xs text-slate-400">Headers</div>
+					<pre class="overflow-x-auto rounded bg-slate-950 p-3 text-xs text-slate-200">{ data.Run.ResponseHeaders }</pre>
+					<div class="text-xs text-slate-400">Body</div>
+					<pre class="max-h-96 overflow-auto rounded bg-slate-950 p-3 text-xs text-slate-200">{ data.Run.ResponseBody }</pre>
+					if data.Run.ErrorMessage != "" {
+						<div class="rounded border border-rose-500/50 bg-rose-950/30 px-3 py-2 text-xs text-rose-200">{ data.Run.ErrorMessage }</div>
+					}
+				</div>
+			</div>
+		</section>
+	}
+}
+
+templ APIKeysPage(data APIKeysPageData) {
+	@Layout("API Keys") {
+		<section class="space-y-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<h1 class="text-3xl font-bold text-white">API Keys</h1>
+					<p class="text-sm text-slate-400">Manage authentication keys and scopes.</p>
+				</div>
+				@button.Button(button.Props{Href: "/ui/api-keys/new"}) {
+					Create API Key
+				}
+			</div>
+			<div class="rounded-xl border border-slate-800 bg-slate-900/70">
+				<div class="overflow-x-auto">
+					<table class="min-w-full text-left text-sm">
+						<thead class="text-xs uppercase text-slate-400">
+							<tr>
+								<th class="px-4 py-3">Name</th>
+								<th class="px-4 py-3">Prefix</th>
+								<th class="px-4 py-3">Scopes</th>
+								<th class="px-4 py-3">Created</th>
+								<th class="px-4 py-3">Status</th>
+								<th class="px-4 py-3 text-right">Actions</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-800 text-slate-200">
+							for _, key := range data.Keys {
+								<tr>
+									<td class="px-4 py-3">{ key.Name }</td>
+									<td class="px-4 py-3 font-mono text-xs text-cyan-300">{ key.KeyPrefix }</td>
+									<td class="px-4 py-3 text-xs text-slate-300">{ key.Scopes }</td>
+									<td class="px-4 py-3 text-xs text-slate-300">{ FormatTimeValue(key.CreatedAt) }</td>
+									<td class="px-4 py-3">
+										if key.RevokedAt == nil {
+											@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) { Active }
+										} else {
+											@badge.Badge(badge.Props{Variant: badge.VariantOutline}) { Revoked }
+										}
+									</td>
+									<td class="px-4 py-3 text-right">
+										if key.RevokedAt == nil {
+											<form method="post" action={ fmt.Sprintf("/ui/api-keys/%s/revoke", key.ID) }>
+												<button type="submit" class="rounded border border-rose-500/70 px-2 py-1 text-xs font-semibold text-rose-300 hover:bg-rose-500/10">Revoke</button>
+											</form>
+										}
+									</td>
+								</tr>
+							}
+							if len(data.Keys) == 0 {
+								<tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">No API keys created.</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	}
+}
+
+templ CreateAPIKeyPage(data CreateAPIKeyPageData) {
+	@Layout("Create API Key") {
+		<section class="mx-auto max-w-3xl space-y-6">
+			<div class="flex items-center justify-between">
+				<h1 class="text-3xl font-bold text-white">Create API Key</h1>
+				<a class="text-sm text-cyan-300 hover:text-cyan-200" href="/ui/api-keys">Back to Keys</a>
+			</div>
+			if data.RawKey != "" {
+				<div class="rounded border border-emerald-500/60 bg-emerald-950/30 p-4">
+					<p class="text-sm font-semibold text-emerald-200">Copy this key now. It will only be shown once.</p>
+					<pre class="mt-3 overflow-x-auto rounded bg-slate-950 p-3 text-xs text-emerald-200">{ data.RawKey }</pre>
+				</div>
+			}
+			if data.Error != "" {
+				<div class="rounded border border-rose-500/50 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">{ data.Error }</div>
+			}
+			<form method="post" action="/ui/api-keys" class="space-y-4 rounded-xl border border-slate-800 bg-slate-900/70 p-6">
+				<label class="block space-y-2">
+					<span class="text-sm text-slate-200">Name</span>
+					<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="name" value={ data.Name } required/>
+				</label>
+				<label class="block space-y-2">
+					<span class="text-sm text-slate-200">Scopes (comma separated)</span>
+					<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="scopes" value={ data.Scopes } placeholder="jobs:read,jobs:write,runs:read" required/>
+				</label>
+				<label class="block space-y-2">
+					<span class="text-sm text-slate-200">Expires At (optional, RFC3339)</span>
+					<input class="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100" name="expires_at" placeholder="2026-12-31T23:59:59Z"/>
+				</label>
+				<div>
+					@button.Button(button.Props{Type: button.TypeSubmit}) {
+						Create Key
+					}
+				</div>
+			</form>
+		</section>
+	}
+}

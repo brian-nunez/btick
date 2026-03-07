@@ -103,3 +103,18 @@ type CreateAPIKeyPageData struct {
 	Name   string
 	Scopes string
 }
+
+type AuthPageData struct {
+	Title            string
+	Subtitle         string
+	Action           string
+	SubmitLabel      string
+	SecondaryText    string
+	SecondaryURL     string
+	SecondaryLabel   string
+	BackURL          string
+	BackLabel        string
+	Email            string
+	EmailPlaceholder string
+	Error            string
+}

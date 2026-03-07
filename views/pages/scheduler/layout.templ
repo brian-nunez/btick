@@ -1,29 +1,44 @@
 package scheduler
 
 templ Layout(title string) {
-	<html lang="en" class="h-full">
+	<html lang="en" class="h-full bg-slate-950">
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ title } - BTick Scheduler</title>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+			<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/assets/css/output.css"/>
 			<script src="/assets/js/lib/htmx.js"></script>
 		</head>
-		<body class="min-h-full bg-slate-950 text-slate-100 antialiased">
-			<div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_20%,rgba(14,165,233,0.20),transparent_35%),radial-gradient(circle_at_85%_10%,rgba(34,197,94,0.18),transparent_32%),linear-gradient(180deg,#020617,#0f172a)]"></div>
-			<header class="border-b border-slate-800/80 bg-slate-900/40 backdrop-blur">
-				<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-					<a href="/ui/jobs" class="text-xl font-semibold tracking-tight text-cyan-300">BTick Scheduler</a>
-					<nav class="flex items-center gap-4 text-sm text-slate-300">
-						<a class="rounded px-2 py-1 hover:bg-slate-800 hover:text-white" href="/ui/jobs">Jobs</a>
-						<a class="rounded px-2 py-1 hover:bg-slate-800 hover:text-white" href="/ui/api-keys">API Keys</a>
-						<a class="rounded px-2 py-1 hover:bg-slate-800 hover:text-white" href="/api/v1/health">API Health</a>
-					</nav>
-				</div>
-			</header>
-			<main class="mx-auto w-full max-w-7xl px-6 py-8">
-				{ children... }
-			</main>
+		<body class="min-h-full bg-slate-950 text-slate-100 antialiased [font-family:'Sora',sans-serif]">
+			<div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(14,165,233,0.18),transparent_36%),radial-gradient(circle_at_80%_0%,rgba(16,185,129,0.14),transparent_28%),linear-gradient(160deg,#020617,#0b1226_45%,#020617)]"></div>
+			<div class="fixed inset-0 -z-10 opacity-25 [background-image:linear-gradient(rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:56px_56px]"></div>
+			<div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+				<header class="mb-8 rounded-2xl border border-slate-800/70 bg-slate-900/70 px-5 py-4 shadow-2xl shadow-slate-950/40 backdrop-blur">
+					<div class="flex flex-wrap items-center justify-between gap-4">
+						<div class="flex items-center gap-3">
+							<div class="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/40 bg-cyan-500/15 text-lg font-semibold text-cyan-300">S</div>
+							<div>
+								<a href="/ui/jobs" class="text-lg font-semibold tracking-tight text-white">BTick Scheduler</a>
+								<p class="text-xs text-slate-400">Generic API-driven scheduling control plane</p>
+							</div>
+						</div>
+						<nav class="flex items-center gap-2 text-sm">
+							<a class="rounded-lg px-3 py-2 text-slate-300 transition hover:bg-slate-800 hover:text-white" href="/ui/jobs">Jobs</a>
+							<a class="rounded-lg px-3 py-2 text-slate-300 transition hover:bg-slate-800 hover:text-white" href="/ui/api-keys">API Keys</a>
+							<a class="rounded-lg px-3 py-2 text-slate-300 transition hover:bg-slate-800 hover:text-white" href="/api/v1/health">API Health</a>
+							<form method="post" action="/logout">
+								<button type="submit" class="rounded-lg border border-rose-400/45 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rose-200 transition hover:bg-rose-500/15">Logout</button>
+							</form>
+						</nav>
+					</div>
+				</header>
+				<main class="space-y-6">
+					{ children... }
+				</main>
+			</div>
 		</body>
 	</html>
 }

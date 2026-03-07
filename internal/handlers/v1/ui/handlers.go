@@ -16,6 +16,7 @@ import (
 	"github.com/brian-nunez/go-echo-starter-template/internal/db/sqlc"
 	"github.com/brian-nunez/go-echo-starter-template/internal/jobs"
 	"github.com/brian-nunez/go-echo-starter-template/internal/runs"
+	"github.com/brian-nunez/go-echo-starter-template/internal/uiauth"
 	"github.com/brian-nunez/go-echo-starter-template/views/pages/scheduler"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -25,18 +26,122 @@ type Handler struct {
 	jobsService    *jobs.Service
 	runsService    *runs.Service
 	apiKeysService *apikeys.Service
+	uiAuthService  *uiauth.Service
 }
 
-func NewHandler(jobsService *jobs.Service, runsService *runs.Service, apiKeysService *apikeys.Service) *Handler {
+func NewHandler(jobsService *jobs.Service, runsService *runs.Service, apiKeysService *apikeys.Service, uiAuthService *uiauth.Service) *Handler {
 	return &Handler{
 		jobsService:    jobsService,
 		runsService:    runsService,
 		apiKeysService: apiKeysService,
+		uiAuthService:  uiAuthService,
 	}
 }
 
+func (h *Handler) Root(c echo.Context) error {
+	if auth.MustPrincipal(c).SubjectID != "" {
+		return c.Redirect(http.StatusSeeOther, "/ui/jobs")
+	}
+	return c.Redirect(http.StatusSeeOther, "/login")
+}
+
+func (h *Handler) RegisterPage(c echo.Context) error {
+	return render(c, scheduler.AuthPage(scheduler.AuthPageData{
+		Title:            "Create your account",
+		Subtitle:         "Set up your scheduler admin account.",
+		Action:           "/register",
+		SubmitLabel:      "Create account",
+		SecondaryText:    "Already have an account?",
+		SecondaryURL:     "/login",
+		SecondaryLabel:   "Sign in",
+		BackURL:          "/",
+		BackLabel:        "Back to home",
+		EmailPlaceholder: "you@company.com",
+	}))
+}
+
+func (h *Handler) LoginPage(c echo.Context) error {
+	return render(c, scheduler.AuthPage(scheduler.AuthPageData{
+		Title:            "Welcome back",
+		Subtitle:         "Sign in to manage scheduled jobs and run history.",
+		Action:           "/login",
+		SubmitLabel:      "Sign in",
+		SecondaryText:    "Need an account?",
+		SecondaryURL:     "/register",
+		SecondaryLabel:   "Create account",
+		BackURL:          "/",
+		BackLabel:        "Back to home",
+		EmailPlaceholder: "you@company.com",
+	}))
+}
+
+func (h *Handler) Register(c echo.Context) error {
+	email := strings.TrimSpace(c.FormValue("email"))
+	password := c.FormValue("password")
+
+	principal, err := h.uiAuthService.Register(c.Request().Context(), email, password)
+	if err != nil {
+		return render(c, scheduler.AuthPage(scheduler.AuthPageData{
+			Title:            "Create your account",
+			Subtitle:         "Set up your scheduler admin account.",
+			Action:           "/register",
+			SubmitLabel:      "Create account",
+			SecondaryText:    "Already have an account?",
+			SecondaryURL:     "/login",
+			SecondaryLabel:   "Sign in",
+			BackURL:          "/",
+			BackLabel:        "Back to home",
+			EmailPlaceholder: "you@company.com",
+			Email:            email,
+			Error:            err.Error(),
+		}))
+	}
+
+	cookie, err := h.uiAuthService.NewSessionCookie(principal, c.Scheme() == "https")
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "failed to create session")
+	}
+	c.SetCookie(cookie)
+	return c.Redirect(http.StatusSeeOther, "/ui/jobs")
+}
+
+func (h *Handler) Login(c echo.Context) error {
+	email := strings.TrimSpace(c.FormValue("email"))
+	password := c.FormValue("password")
+
+	principal, err := h.uiAuthService.Login(c.Request().Context(), email, password)
+	if err != nil {
+		return render(c, scheduler.AuthPage(scheduler.AuthPageData{
+			Title:            "Welcome back",
+			Subtitle:         "Sign in to manage scheduled jobs and run history.",
+			Action:           "/login",
+			SubmitLabel:      "Sign in",
+			SecondaryText:    "Need an account?",
+			SecondaryURL:     "/register",
+			SecondaryLabel:   "Create account",
+			BackURL:          "/",
+			BackLabel:        "Back to home",
+			EmailPlaceholder: "you@company.com",
+			Email:            email,
+			Error:            err.Error(),
+		}))
+	}
+
+	cookie, err := h.uiAuthService.NewSessionCookie(principal, c.Scheme() == "https")
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "failed to create session")
+	}
+	c.SetCookie(cookie)
+	return c.Redirect(http.StatusSeeOther, "/ui/jobs")
+}
+
+func (h *Handler) Logout(c echo.Context) error {
+	c.SetCookie(h.uiAuthService.ClearSessionCookie(c.Scheme() == "https"))
+	return c.Redirect(http.StatusSeeOther, "/login")
+}
+
 func (h *Handler) JobsPage(c echo.Context) error {
-	principal := auth.SystemPrincipal()
+	principal := auth.MustPrincipal(c)
 	jobList, err := h.jobsService.List(c.Request().Context(), principal)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -49,7 +154,7 @@ func (h *Handler) JobsPage(c echo.Context) error {
 }
 
 func (h *Handler) JobsTablePartial(c echo.Context) error {
-	principal := auth.SystemPrincipal()
+	principal := auth.MustPrincipal(c)
 	jobList, err := h.jobsService.List(c.Request().Context(), principal)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -78,7 +183,7 @@ func (h *Handler) CreateJob(c echo.Context) error {
 		}))
 	}
 
-	created, err := h.jobsService.Create(c.Request().Context(), auth.SystemPrincipal(), input)
+	created, err := h.jobsService.Create(c.Request().Context(), auth.MustPrincipal(c), input)
 	if err != nil {
 		return render(c, scheduler.JobFormPage(scheduler.JobFormPageData{
 			Title:       "Create Job",
@@ -98,7 +203,7 @@ func (h *Handler) EditJobPage(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "invalid job id")
 	}
 
-	job, err := h.jobsService.Get(c.Request().Context(), auth.SystemPrincipal(), jobID)
+	job, err := h.jobsService.Get(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
 		return c.String(http.StatusNotFound, "job not found")
 	}
@@ -128,7 +233,7 @@ func (h *Handler) UpdateJob(c echo.Context) error {
 		}))
 	}
 
-	updated, err := h.jobsService.UpdatePatch(c.Request().Context(), auth.SystemPrincipal(), jobID, jobs.PatchJobInput{
+	updated, err := h.jobsService.UpdatePatch(c.Request().Context(), auth.MustPrincipal(c), jobID, jobs.PatchJobInput{
 		Name:           &input.Name,
 		Method:         &input.Method,
 		URL:            &input.URL,
@@ -159,12 +264,12 @@ func (h *Handler) JobDetailPage(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "invalid job id")
 	}
 
-	job, err := h.jobsService.Get(c.Request().Context(), auth.SystemPrincipal(), jobID)
+	job, err := h.jobsService.Get(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
 		return c.String(http.StatusNotFound, "job not found")
 	}
 
-	runsList, _ := h.runsService.ListByJob(c.Request().Context(), auth.SystemPrincipal(), job.ID, 20)
+	runsList, _ := h.runsService.ListByJob(c.Request().Context(), auth.MustPrincipal(c), job.ID, 20)
 
 	return render(c, scheduler.JobDetailPage(scheduler.JobDetailPageData{
 		Job:  toUIJob(job),
@@ -178,12 +283,12 @@ func (h *Handler) JobRunsPage(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "invalid job id")
 	}
 
-	job, err := h.jobsService.Get(c.Request().Context(), auth.SystemPrincipal(), jobID)
+	job, err := h.jobsService.Get(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
 		return c.String(http.StatusNotFound, "job not found")
 	}
 
-	runsList, err := h.runsService.ListByJob(c.Request().Context(), auth.SystemPrincipal(), jobID, 200)
+	runsList, err := h.runsService.ListByJob(c.Request().Context(), auth.MustPrincipal(c), jobID, 200)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -200,7 +305,7 @@ func (h *Handler) RunDetailPage(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "invalid run id")
 	}
 
-	run, err := h.runsService.Get(c.Request().Context(), auth.SystemPrincipal(), runID)
+	run, err := h.runsService.Get(c.Request().Context(), auth.MustPrincipal(c), runID)
 	if err != nil {
 		return c.String(http.StatusNotFound, "run not found")
 	}
@@ -213,7 +318,7 @@ func (h *Handler) PauseJob(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusBadRequest, "invalid job id")
 	}
-	_, err = h.jobsService.Pause(c.Request().Context(), auth.SystemPrincipal(), jobID)
+	_, err = h.jobsService.Pause(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -228,7 +333,7 @@ func (h *Handler) ResumeJob(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusBadRequest, "invalid job id")
 	}
-	_, err = h.jobsService.Resume(c.Request().Context(), auth.SystemPrincipal(), jobID)
+	_, err = h.jobsService.Resume(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -243,7 +348,7 @@ func (h *Handler) TriggerJob(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusBadRequest, "invalid job id")
 	}
-	if err := h.jobsService.Trigger(c.Request().Context(), auth.SystemPrincipal(), jobID); err != nil {
+	if err := h.jobsService.Trigger(c.Request().Context(), auth.MustPrincipal(c), jobID); err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	if isHTMX(c) {
@@ -253,7 +358,7 @@ func (h *Handler) TriggerJob(c echo.Context) error {
 }
 
 func (h *Handler) APIKeysPage(c echo.Context) error {
-	keys, err := h.apiKeysService.List(c.Request().Context(), auth.SystemPrincipal())
+	keys, err := h.apiKeysService.List(c.Request().Context(), auth.MustPrincipal(c))
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -284,7 +389,7 @@ func (h *Handler) CreateAPIKey(c echo.Context) error {
 		expiresAt = &parsed
 	}
 
-	result, err := h.apiKeysService.Create(c.Request().Context(), auth.SystemPrincipal(), apikeys.CreateAPIKeyInput{
+	result, err := h.apiKeysService.Create(c.Request().Context(), auth.MustPrincipal(c), apikeys.CreateAPIKeyInput{
 		Name:      name,
 		Scopes:    scopes,
 		ExpiresAt: expiresAt,
@@ -308,7 +413,7 @@ func (h *Handler) RevokeAPIKey(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "invalid key id")
 	}
 
-	if _, err := h.apiKeysService.Revoke(c.Request().Context(), auth.SystemPrincipal(), keyID); err != nil {
+	if _, err := h.apiKeysService.Revoke(c.Request().Context(), auth.MustPrincipal(c), keyID); err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	return c.Redirect(http.StatusSeeOther, "/ui/api-keys")

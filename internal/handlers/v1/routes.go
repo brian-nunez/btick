@@ -8,6 +8,7 @@ import (
 	uihandlers "github.com/brian-nunez/go-echo-starter-template/internal/handlers/v1/ui"
 	"github.com/brian-nunez/go-echo-starter-template/internal/jobs"
 	"github.com/brian-nunez/go-echo-starter-template/internal/runs"
+	"github.com/brian-nunez/go-echo-starter-template/internal/uiauth"
 	"github.com/labstack/echo/v4"
 )
 
@@ -16,32 +17,42 @@ type Dependencies struct {
 	JobsService    *jobs.Service
 	RunsService    *runs.Service
 	APIKeysService *apikeys.Service
+	UIAuthService  *uiauth.Service
 }
 
 func RegisterRoutes(e *echo.Echo, dependencies Dependencies) {
 	healthHandler := NewHealthHandler(dependencies.Database)
-	uiHandler := uihandlers.NewHandler(dependencies.JobsService, dependencies.RunsService, dependencies.APIKeysService)
+	uiHandler := uihandlers.NewHandler(dependencies.JobsService, dependencies.RunsService, dependencies.APIKeysService, dependencies.UIAuthService)
 	jobsHandler := NewJobsHandler(dependencies.JobsService)
 	runsHandler := NewRunsHandler(dependencies.RunsService)
 	keysHandler := NewAPIKeysHandler(dependencies.APIKeysService)
 
-	e.GET("/", uiHandler.JobsPage)
-	e.GET("/ui/jobs", uiHandler.JobsPage)
-	e.GET("/ui/jobs/new", uiHandler.CreateJobPage)
-	e.POST("/ui/jobs", uiHandler.CreateJob)
-	e.GET("/ui/jobs/:jobId", uiHandler.JobDetailPage)
-	e.GET("/ui/jobs/:jobId/edit", uiHandler.EditJobPage)
-	e.POST("/ui/jobs/:jobId", uiHandler.UpdateJob)
-	e.POST("/ui/jobs/:jobId/pause", uiHandler.PauseJob)
-	e.POST("/ui/jobs/:jobId/resume", uiHandler.ResumeJob)
-	e.POST("/ui/jobs/:jobId/trigger", uiHandler.TriggerJob)
-	e.GET("/ui/jobs/:jobId/runs", uiHandler.JobRunsPage)
-	e.GET("/ui/runs/:runId", uiHandler.RunDetailPage)
-	e.GET("/ui/api-keys", uiHandler.APIKeysPage)
-	e.GET("/ui/api-keys/new", uiHandler.CreateAPIKeyPage)
-	e.POST("/ui/api-keys", uiHandler.CreateAPIKey)
-	e.POST("/ui/api-keys/:keyId/revoke", uiHandler.RevokeAPIKey)
-	e.GET("/ui/partials/jobs-table", uiHandler.JobsTablePartial)
+	e.Use(uiauth.SessionMiddleware(dependencies.UIAuthService))
+
+	e.GET("/", uiHandler.Root)
+	e.GET("/register", uiHandler.RegisterPage, uiauth.RequireGuest)
+	e.POST("/register", uiHandler.Register, uiauth.RequireGuest)
+	e.GET("/login", uiHandler.LoginPage, uiauth.RequireGuest)
+	e.POST("/login", uiHandler.Login, uiauth.RequireGuest)
+	e.POST("/logout", uiHandler.Logout, uiauth.RequireLogin(dependencies.UIAuthService))
+
+	protectedUI := e.Group("", uiauth.RequireLogin(dependencies.UIAuthService))
+	protectedUI.GET("/ui/jobs", uiHandler.JobsPage)
+	protectedUI.GET("/ui/jobs/new", uiHandler.CreateJobPage)
+	protectedUI.POST("/ui/jobs", uiHandler.CreateJob)
+	protectedUI.GET("/ui/jobs/:jobId", uiHandler.JobDetailPage)
+	protectedUI.GET("/ui/jobs/:jobId/edit", uiHandler.EditJobPage)
+	protectedUI.POST("/ui/jobs/:jobId", uiHandler.UpdateJob)
+	protectedUI.POST("/ui/jobs/:jobId/pause", uiHandler.PauseJob)
+	protectedUI.POST("/ui/jobs/:jobId/resume", uiHandler.ResumeJob)
+	protectedUI.POST("/ui/jobs/:jobId/trigger", uiHandler.TriggerJob)
+	protectedUI.GET("/ui/jobs/:jobId/runs", uiHandler.JobRunsPage)
+	protectedUI.GET("/ui/runs/:runId", uiHandler.RunDetailPage)
+	protectedUI.GET("/ui/api-keys", uiHandler.APIKeysPage)
+	protectedUI.GET("/ui/api-keys/new", uiHandler.CreateAPIKeyPage)
+	protectedUI.POST("/ui/api-keys", uiHandler.CreateAPIKey)
+	protectedUI.POST("/ui/api-keys/:keyId/revoke", uiHandler.RevokeAPIKey)
+	protectedUI.GET("/ui/partials/jobs-table", uiHandler.JobsTablePartial)
 
 	e.GET("/healthz", healthHandler.Healthz)
 	e.GET("/readyz", healthHandler.Readyz)

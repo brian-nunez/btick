@@ -26,3 +26,13 @@ func IsRunSuccess(status string) bool {
 func IsRunFailure(status string) bool {
 	return strings.EqualFold(status, "failed")
 }
+
+func countEnabledJobs(jobs []UIJob) int {
+	count := 0
+	for _, job := range jobs {
+		if job.Enabled {
+			count++
+		}
+	}
+	return count
+}

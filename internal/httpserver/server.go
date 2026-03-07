@@ -13,6 +13,7 @@ import (
 	v1 "github.com/brian-nunez/go-echo-starter-template/internal/handlers/v1"
 	"github.com/brian-nunez/go-echo-starter-template/internal/jobs"
 	"github.com/brian-nunez/go-echo-starter-template/internal/runs"
+	"github.com/brian-nunez/go-echo-starter-template/internal/uiauth"
 	"github.com/labstack/echo/v4"
 )
 
@@ -67,6 +68,14 @@ func Bootstrap(config BootstrapConfig) (Server, error) {
 	jobsService := jobs.NewService(queries, authorizer)
 	runsService := runs.NewService(queries, authorizer)
 	apiKeysService := apikeys.NewService(queries, authorizer)
+	uiAuthService, err := uiauth.NewService(queries, uiauth.Config{
+		SessionSecret: config.AppConfig.UISessionSecret,
+		SessionTTL:    config.AppConfig.UISessionTTL,
+	})
+	if err != nil {
+		_ = database.Close()
+		return nil, fmt.Errorf("build ui auth service: %w", err)
+	}
 
 	echoServer := New().
 		WithStaticAssets(map[string]string{
@@ -80,6 +89,7 @@ func Bootstrap(config BootstrapConfig) (Server, error) {
 				JobsService:    jobsService,
 				RunsService:    runsService,
 				APIKeysService: apiKeysService,
+				UIAuthService:  uiAuthService,
 			})
 		}).
 		WithNotFound().

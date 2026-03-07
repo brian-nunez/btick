@@ -70,3 +70,14 @@ type ManualJobTrigger struct {
 	ClaimedBy   *string    `json:"claimed_by,omitempty"`
 	CompletedAt *time.Time `json:"completed_at,omitempty"`
 }
+
+type User struct {
+	ID           uuid.UUID  `json:"id"`
+	Email        string     `json:"email"`
+	PasswordHash string     `json:"-"`
+	Roles        []byte     `json:"roles"`
+	Scopes       []byte     `json:"scopes"`
+	TenantID     *uuid.UUID `json:"tenant_id,omitempty"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+}

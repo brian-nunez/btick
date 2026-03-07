@@ -490,6 +490,47 @@ func (q *Queries) UpdateAPIKeyLastUsedAt(ctx context.Context, id uuid.UUID) erro
 	return err
 }
 
+type CreateUserParams struct {
+	ID           uuid.UUID
+	Email        string
+	PasswordHash string
+	Roles        []byte
+	Scopes       []byte
+	TenantID     *uuid.UUID
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, `
+		INSERT INTO users (
+			id,
+			email,
+			password_hash,
+			roles,
+			scopes,
+			tenant_id
+		)
+		VALUES ($1,$2,$3,$4,$5,$6)
+		RETURNING id, email, password_hash, roles, scopes, tenant_id, created_at, updated_at
+	`,
+		arg.ID,
+		arg.Email,
+		arg.PasswordHash,
+		arg.Roles,
+		arg.Scopes,
+		nullableUUID(arg.TenantID),
+	)
+	return scanUser(row)
+}
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, `
+		SELECT id, email, password_hash, roles, scopes, tenant_id, created_at, updated_at
+		FROM users
+		WHERE email = $1
+	`, email)
+	return scanUser(row)
+}
+
 func (q *Queries) ClaimDueJob(ctx context.Context, workerID string, staleInterval string) (*Job, error) {
 	row := q.db.QueryRowContext(ctx, `
 		UPDATE jobs
@@ -792,6 +833,28 @@ func scanManualTrigger(row scanner) (ManualJobTrigger, error) {
 	item.ClaimedBy = nullStringPtr(claimedBy)
 	item.CompletedAt = nullTimePtr(completedAt)
 
+	return item, nil
+}
+
+func scanUser(row scanner) (User, error) {
+	var item User
+	var tenantID sql.NullString
+
+	err := row.Scan(
+		&item.ID,
+		&item.Email,
+		&item.PasswordHash,
+		&item.Roles,
+		&item.Scopes,
+		&tenantID,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	)
+	if err != nil {
+		return User{}, err
+	}
+
+	item.TenantID = nullUUIDPtr(tenantID)
 	return item, nil
 }
 

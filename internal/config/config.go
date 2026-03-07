@@ -12,6 +12,8 @@ type APIConfig struct {
 	Port             string
 	DatabaseURL      string
 	StaticAssetsPath string
+	UISessionSecret  string
+	UISessionTTL     time.Duration
 }
 
 type WorkerConfig struct {
@@ -27,10 +29,17 @@ type WorkerConfig struct {
 }
 
 func LoadAPIConfig() (APIConfig, error) {
+	sessionTTLHours, err := intEnv("UI_SESSION_TTL_HOURS", 12)
+	if err != nil {
+		return APIConfig{}, err
+	}
+
 	cfg := APIConfig{
 		Port:             envOrDefault("PORT", "8080"),
 		DatabaseURL:      strings.TrimSpace(os.Getenv("DATABASE_URL")),
 		StaticAssetsPath: envOrDefault("STATIC_ASSETS_PATH", "./assets"),
+		UISessionSecret:  envOrDefault("UI_SESSION_SECRET", "dev-session-secret-change-me"),
+		UISessionTTL:     time.Duration(sessionTTLHours) * time.Hour,
 	}
 
 	if cfg.DatabaseURL == "" {

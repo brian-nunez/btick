@@ -65,6 +65,8 @@ API:
 
 - `PORT` (default `8080`)
 - `STATIC_ASSETS_PATH` (default `./assets`)
+- `UI_SESSION_SECRET` (default `dev-session-secret-change-me`)
+- `UI_SESSION_TTL_HOURS` (default `12`)
 
 Worker:
 
@@ -136,6 +138,8 @@ Keys are generated once and only `key_prefix` + secure hash are stored.
 
 ## UI Routes
 
+- `/register`
+- `/login`
 - `/ui/jobs`
 - `/ui/jobs/new`
 - `/ui/jobs/{jobId}`

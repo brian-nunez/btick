@@ -12,7 +12,7 @@ func MustPrincipal(c echo.Context) *Principal {
 	value := c.Get(principalContextKey)
 	principal, ok := value.(*Principal)
 	if !ok || principal == nil {
-		return SystemPrincipal()
+		return &Principal{}
 	}
 	return principal
 }

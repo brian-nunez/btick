@@ -8,6 +8,55 @@ import (
 	button "github.com/brian-nunez/go-echo-starter-template/views/components/button"
 )
 
+templ AuthPage(data AuthPageData) {
+	<html lang="en" class="h-full bg-slate-50">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ data.Title } - BTick Scheduler</title>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
+			<link rel="stylesheet" href="/assets/css/output.css"/>
+		</head>
+		<body class="min-h-full bg-slate-50 text-slate-900 antialiased [font-family:Inter,sans-serif]">
+			<div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_12%_8%,rgba(19,127,236,0.14),transparent_32%),linear-gradient(180deg,#f8fafc,#f1f5f9)]"></div>
+			<div class="min-h-screen flex items-center justify-center px-4 py-10">
+				<div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+					<div class="mb-8 text-center">
+						<div class="mx-auto mb-3 size-10 rounded-lg bg-[#137fec] text-white flex items-center justify-center">
+							<span class="material-symbols-outlined">schedule</span>
+						</div>
+						<h1 class="text-2xl font-bold text-slate-900">{ data.Title }</h1>
+						<p class="mt-2 text-sm text-slate-500">{ data.Subtitle }</p>
+					</div>
+					if data.Error != "" {
+						<div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{ data.Error }</div>
+					}
+					<form method="post" action={ data.Action } class="space-y-4">
+						<label class="block space-y-1">
+							<span class="text-sm font-medium text-slate-700">Email</span>
+							<input name="email" type="email" required value={ data.Email } placeholder={ data.EmailPlaceholder } class="h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 outline-none focus:border-[#137fec] focus:ring-2 focus:ring-[#137fec]/20"/>
+						</label>
+						<label class="block space-y-1">
+							<span class="text-sm font-medium text-slate-700">Password</span>
+							<input name="password" type="password" required class="h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 outline-none focus:border-[#137fec] focus:ring-2 focus:ring-[#137fec]/20"/>
+						</label>
+						<button type="submit" class="h-11 w-full rounded-lg bg-[#137fec] font-bold text-white hover:bg-[#0f72d6]">{ data.SubmitLabel }</button>
+					</form>
+					<div class="mt-5 text-center text-sm text-slate-500">
+						{ data.SecondaryText }
+						<a href={ data.SecondaryURL } class="ml-1 font-semibold text-[#137fec] hover:underline">{ data.SecondaryLabel }</a>
+					</div>
+					<div class="mt-6 text-center text-sm">
+						<a href={ data.BackURL } class="text-slate-500 hover:text-[#137fec]">{ data.BackLabel }</a>
+					</div>
+				</div>
+			</div>
+		</body>
+	</html>
+}
+
 templ JobsPage(data JobsPageData) {
 	@Layout(data.Title) {
 		<section class="space-y-6">

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/brian-nunez/go-echo-starter-template/internal/config"
@@ -24,7 +27,7 @@ func NewService(config config.WorkerConfig, queries *sqlc.Queries, logger *log.L
 	pool := taskworker.NewWorkerPool(taskworker.WorkerPoolConfig{
 		Concurrency:  config.Concurrency,
 		LogPath:      config.TaskLogPath,
-		DatabasePath: config.TaskStateDBPath,
+		DatabasePath: ":memory:",
 	})
 
 	return &Service{
@@ -39,6 +42,10 @@ func NewService(config config.WorkerConfig, queries *sqlc.Queries, logger *log.L
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	if err := ensureTaskStatePath(s.config.TaskStateDBPath); err != nil {
+		return fmt.Errorf("prepare task state database path: %w", err)
+	}
+
 	if err := s.pool.Start(); err != nil {
 		return fmt.Errorf("start task worker pool: %w", err)
 	}
@@ -135,4 +142,29 @@ func toPostgresInterval(duration time.Duration) string {
 		return fmt.Sprintf("%d minutes", int(duration/time.Minute))
 	}
 	return fmt.Sprintf("%d seconds", int(duration/time.Second))
+}
+
+func ensureTaskStatePath(path string) error {
+	trimmedPath := strings.TrimSpace(path)
+	if trimmedPath == "" || trimmedPath == ":memory:" {
+		return nil
+	}
+
+	if strings.HasPrefix(trimmedPath, "file:") {
+		trimmedPath = strings.TrimPrefix(trimmedPath, "file:")
+		if index := strings.Index(trimmedPath, "?"); index >= 0 {
+			trimmedPath = trimmedPath[:index]
+		}
+	}
+
+	if trimmedPath == "" {
+		return nil
+	}
+
+	dir := filepath.Dir(trimmedPath)
+	if dir == "." || dir == "" {
+		return nil
+	}
+
+	return os.MkdirAll(dir, 0o755)
 }

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brian-nunez/go-echo-starter-template/sdk/go/scheduler"
+	"github.com/brian-nunez/btick/sdk/go/scheduler"
 )
 
 func main() {

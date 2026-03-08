@@ -1,4 +1,4 @@
-module github.com/brian-nunez/go-echo-starter-template
+module github.com/brian-nunez/btick
 
 go 1.25.0
 

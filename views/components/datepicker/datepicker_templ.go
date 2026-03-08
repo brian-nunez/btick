@@ -11,12 +11,12 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/brian-nunez/go-echo-starter-template/views/components/button"
-	"github.com/brian-nunez/go-echo-starter-template/views/components/calendar"
-	"github.com/brian-nunez/go-echo-starter-template/views/components/card"
-	"github.com/brian-nunez/go-echo-starter-template/views/components/icon"
-	"github.com/brian-nunez/go-echo-starter-template/views/components/popover"
-	"github.com/brian-nunez/go-echo-starter-template/views/utils"
+	"github.com/brian-nunez/btick/views/components/button"
+	"github.com/brian-nunez/btick/views/components/calendar"
+	"github.com/brian-nunez/btick/views/components/card"
+	"github.com/brian-nunez/btick/views/components/icon"
+	"github.com/brian-nunez/btick/views/components/popover"
+	"github.com/brian-nunez/btick/views/utils"
 	"time"
 )
 

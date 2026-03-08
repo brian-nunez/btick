@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	handlererrors "github.com/brian-nunez/go-echo-starter-template/internal/handlers/errors"
+	handlererrors "github.com/brian-nunez/btick/internal/handlers/errors"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )

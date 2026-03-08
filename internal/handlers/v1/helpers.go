@@ -6,10 +6,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/brian-nunez/go-echo-starter-template/internal/authorization"
-	handlererrors "github.com/brian-nunez/go-echo-starter-template/internal/handlers/errors"
-	"github.com/brian-nunez/go-echo-starter-template/internal/jobs"
-	"github.com/brian-nunez/go-echo-starter-template/internal/runs"
+	"github.com/brian-nunez/btick/internal/authorization"
+	handlererrors "github.com/brian-nunez/btick/internal/handlers/errors"
+	"github.com/brian-nunez/btick/internal/jobs"
+	"github.com/brian-nunez/btick/internal/runs"
 	"github.com/labstack/echo/v4"
 )
 

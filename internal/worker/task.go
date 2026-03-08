@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/brian-nunez/go-echo-starter-template/internal/db/sqlc"
-	"github.com/brian-nunez/go-echo-starter-template/internal/scheduler"
+	"github.com/brian-nunez/btick/internal/db/sqlc"
+	"github.com/brian-nunez/btick/internal/scheduler"
 	taskworker "github.com/brian-nunez/task-orchestration"
 	"github.com/google/uuid"
 )

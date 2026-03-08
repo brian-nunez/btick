@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brian-nunez/go-echo-starter-template/internal/auth"
-	"github.com/brian-nunez/go-echo-starter-template/internal/db/sqlc"
+	"github.com/brian-nunez/btick/internal/auth"
+	"github.com/brian-nunez/btick/internal/db/sqlc"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"

@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/brian-nunez/baccess"
-	"github.com/brian-nunez/go-echo-starter-template/internal/auth"
+	"github.com/brian-nunez/btick/internal/auth"
 	"github.com/google/uuid"
 )
 

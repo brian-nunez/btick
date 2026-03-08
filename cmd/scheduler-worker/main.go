@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/brian-nunez/go-echo-starter-template/internal/config"
-	"github.com/brian-nunez/go-echo-starter-template/internal/db"
-	"github.com/brian-nunez/go-echo-starter-template/internal/db/sqlc"
-	"github.com/brian-nunez/go-echo-starter-template/internal/worker"
+	"github.com/brian-nunez/btick/internal/config"
+	"github.com/brian-nunez/btick/internal/db"
+	"github.com/brian-nunez/btick/internal/db/sqlc"
+	"github.com/brian-nunez/btick/internal/worker"
 )
 
 func main() {

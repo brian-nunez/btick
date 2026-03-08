@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/brian-nunez/go-echo-starter-template/internal/auth"
-	"github.com/brian-nunez/go-echo-starter-template/internal/db/sqlc"
-	"github.com/brian-nunez/go-echo-starter-template/internal/jobs"
+	"github.com/brian-nunez/btick/internal/auth"
+	"github.com/brian-nunez/btick/internal/db/sqlc"
+	"github.com/brian-nunez/btick/internal/jobs"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )

@@ -13,8 +13,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"context"
 	"fmt"
-	"github.com/brian-nunez/go-echo-starter-template/views/components/popover"
-	"github.com/brian-nunez/go-echo-starter-template/views/utils"
+	"github.com/brian-nunez/btick/views/components/popover"
+	"github.com/brian-nunez/btick/views/utils"
 )
 
 type contextKey string

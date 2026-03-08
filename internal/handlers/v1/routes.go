@@ -3,12 +3,12 @@ package v1
 import (
 	"database/sql"
 
-	"github.com/brian-nunez/go-echo-starter-template/internal/apikeys"
-	"github.com/brian-nunez/go-echo-starter-template/internal/auth"
-	uihandlers "github.com/brian-nunez/go-echo-starter-template/internal/handlers/v1/ui"
-	"github.com/brian-nunez/go-echo-starter-template/internal/jobs"
-	"github.com/brian-nunez/go-echo-starter-template/internal/runs"
-	"github.com/brian-nunez/go-echo-starter-template/internal/uiauth"
+	"github.com/brian-nunez/btick/internal/apikeys"
+	"github.com/brian-nunez/btick/internal/auth"
+	uihandlers "github.com/brian-nunez/btick/internal/handlers/v1/ui"
+	"github.com/brian-nunez/btick/internal/jobs"
+	"github.com/brian-nunez/btick/internal/runs"
+	"github.com/brian-nunez/btick/internal/uiauth"
 	"github.com/labstack/echo/v4"
 )
 

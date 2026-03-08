@@ -12,8 +12,8 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"github.com/brian-nunez/go-echo-starter-template/views/components/icon"
-	"github.com/brian-nunez/go-echo-starter-template/views/utils"
+	"github.com/brian-nunez/btick/views/components/icon"
+	"github.com/brian-nunez/btick/views/utils"
 	"strconv"
 )
 

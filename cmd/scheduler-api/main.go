@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/brian-nunez/go-echo-starter-template/internal/config"
-	"github.com/brian-nunez/go-echo-starter-template/internal/httpserver"
+	"github.com/brian-nunez/btick/internal/config"
+	"github.com/brian-nunez/btick/internal/httpserver"
 )
 
 func main() {

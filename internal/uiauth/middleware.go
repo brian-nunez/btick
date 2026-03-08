@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/brian-nunez/go-echo-starter-template/internal/auth"
+	"github.com/brian-nunez/btick/internal/auth"
 	"github.com/labstack/echo/v4"
 )
 

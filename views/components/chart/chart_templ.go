@@ -10,7 +10,7 @@ package chart
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/brian-nunez/go-echo-starter-template/views/utils"
+import "github.com/brian-nunez/btick/views/utils"
 
 type Variant string
 

@@ -368,21 +368,27 @@ func (h *Handler) APIKeysPage(c echo.Context) error {
 }
 
 func (h *Handler) CreateAPIKeyPage(c echo.Context) error {
-	return render(c, scheduler.CreateAPIKeyPage(scheduler.CreateAPIKeyPageData{}))
+	return render(c, scheduler.CreateAPIKeyPage(scheduler.CreateAPIKeyPageData{
+		ScopeOptions:   apiKeyScopeOptions(),
+		SelectedScopes: defaultSelectedAPIKeyScopes(),
+	}))
 }
 
 func (h *Handler) CreateAPIKey(c echo.Context) error {
 	name := strings.TrimSpace(c.FormValue("name"))
-	scopes := normalizeScopes(c.FormValue("scopes"))
+	expiresAtRaw := strings.TrimSpace(c.FormValue("expires_at"))
+	scopes := parseSelectedScopes(c)
 
 	var expiresAt *time.Time
-	if rawExpiresAt := strings.TrimSpace(c.FormValue("expires_at")); rawExpiresAt != "" {
-		parsed, err := time.Parse(time.RFC3339, rawExpiresAt)
+	if expiresAtRaw != "" {
+		parsed, err := time.Parse(time.RFC3339, expiresAtRaw)
 		if err != nil {
 			return render(c, scheduler.CreateAPIKeyPage(scheduler.CreateAPIKeyPageData{
-				Error:  "Expires At must be RFC3339 (example: 2026-12-31T23:59:59Z)",
-				Name:   name,
-				Scopes: strings.Join(scopes, ","),
+				Error:          "Expires At must be RFC3339 (example: 2026-12-31T23:59:59Z)",
+				Name:           name,
+				SelectedScopes: scopes,
+				ScopeOptions:   apiKeyScopeOptions(),
+				ExpiresAt:      expiresAtRaw,
 			}))
 		}
 		expiresAt = &parsed
@@ -395,14 +401,18 @@ func (h *Handler) CreateAPIKey(c echo.Context) error {
 	})
 	if err != nil {
 		return render(c, scheduler.CreateAPIKeyPage(scheduler.CreateAPIKeyPageData{
-			Error:  err.Error(),
-			Name:   name,
-			Scopes: strings.Join(scopes, ","),
+			Error:          err.Error(),
+			Name:           name,
+			SelectedScopes: scopes,
+			ScopeOptions:   apiKeyScopeOptions(),
+			ExpiresAt:      expiresAtRaw,
 		}))
 	}
 
 	return render(c, scheduler.CreateAPIKeyPage(scheduler.CreateAPIKeyPageData{
-		RawKey: result.RawKey,
+		RawKey:         result.RawKey,
+		ScopeOptions:   apiKeyScopeOptions(),
+		SelectedScopes: scopes,
 	}))
 }
 
@@ -656,6 +666,82 @@ func normalizeScopes(raw string) []string {
 		scopes = append(scopes, scope)
 	}
 	return scopes
+}
+
+func parseSelectedScopes(c echo.Context) []string {
+	formValues, err := c.FormParams()
+	if err != nil {
+		return nil
+	}
+
+	values := formValues["scopes"]
+	if len(values) == 0 {
+		values = normalizeScopes(c.FormValue("scopes"))
+	}
+
+	seen := map[string]struct{}{}
+	selected := make([]string, 0, len(values))
+	for _, value := range values {
+		scope := strings.TrimSpace(value)
+		if scope == "" {
+			continue
+		}
+		if _, ok := seen[scope]; ok {
+			continue
+		}
+		seen[scope] = struct{}{}
+		selected = append(selected, scope)
+	}
+	return selected
+}
+
+func defaultSelectedAPIKeyScopes() []string {
+	return []string{
+		"jobs:read",
+		"jobs:write",
+		"jobs:trigger",
+		"runs:read",
+	}
+}
+
+func apiKeyScopeOptions() []scheduler.ScopeOption {
+	return []scheduler.ScopeOption{
+		{
+			Value:       "jobs:read",
+			Label:       "Read Jobs",
+			Description: "View job definitions and schedules.",
+		},
+		{
+			Value:       "jobs:write",
+			Label:       "Write Jobs",
+			Description: "Create and update scheduled jobs.",
+		},
+		{
+			Value:       "jobs:delete",
+			Label:       "Delete Jobs",
+			Description: "Delete existing scheduled jobs.",
+		},
+		{
+			Value:       "jobs:trigger",
+			Label:       "Trigger Jobs",
+			Description: "Run jobs immediately without waiting for cron.",
+		},
+		{
+			Value:       "runs:read",
+			Label:       "Read Runs",
+			Description: "View run history and execution details.",
+		},
+		{
+			Value:       "keys:read",
+			Label:       "Read API Keys",
+			Description: "List existing API keys and status.",
+		},
+		{
+			Value:       "keys:write",
+			Label:       "Write API Keys",
+			Description: "Create and revoke API keys.",
+		},
+	}
 }
 
 func render(c echo.Context, component templ.Component) error {

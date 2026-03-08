@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"slices"
 	"strings"
 	"time"
 )
@@ -25,6 +26,10 @@ func IsRunSuccess(status string) bool {
 
 func IsRunFailure(status string) bool {
 	return strings.EqualFold(status, "failed")
+}
+
+func HasScope(selected []string, scope string) bool {
+	return slices.Contains(selected, scope)
 }
 
 func countEnabledJobs(jobs []UIJob) int {

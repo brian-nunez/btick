@@ -97,11 +97,19 @@ type APIKeysPageData struct {
 	Keys []UIAPIKey
 }
 
+type ScopeOption struct {
+	Value       string
+	Label       string
+	Description string
+}
+
 type CreateAPIKeyPageData struct {
-	Error  string
-	RawKey string
-	Name   string
-	Scopes string
+	Error          string
+	RawKey         string
+	Name           string
+	SelectedScopes []string
+	ScopeOptions   []ScopeOption
+	ExpiresAt      string
 }
 
 type LandingPageData struct {

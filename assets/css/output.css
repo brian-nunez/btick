@@ -414,6 +414,9 @@
   .my-auto {
     margin-block: auto;
   }
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing) * 0.5);
+  }
   .mt-1 {
     margin-top: calc(var(--spacing) * 1);
   }
@@ -2148,6 +2151,13 @@
       }
     }
   }
+  .hover\:border-\[\#137fec\]\/40 {
+    &:hover {
+      @media (hover: hover) {
+        border-color: color-mix(in oklab, #137fec 40%, transparent);
+      }
+    }
+  }
   .hover\:border-primary\/50 {
     &:hover {
       @media (hover: hover) {
@@ -2292,6 +2302,13 @@
       }
     }
   }
+  .hover\:bg-white {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-white);
+      }
+    }
+  }
   .hover\:bg-white\/80 {
     &:hover {
       @media (hover: hover) {
@@ -2406,6 +2423,11 @@
   .focus\:ring-\[\#137fec\]\/20 {
     &:focus {
       --tw-ring-color: color-mix(in oklab, #137fec 20%, transparent);
+    }
+  }
+  .focus\:ring-\[\#137fec\]\/30 {
+    &:focus {
+      --tw-ring-color: color-mix(in oklab, #137fec 30%, transparent);
     }
   }
   .focus\:ring-ring {

@@ -1748,20 +1748,92 @@ func CreateAPIKeyPage(data CreateAPIKeyPageData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "\" required></label> <label class=\"block space-y-2\"><span class=\"text-sm font-semibold text-slate-700\">Scopes (comma separated)</span> <input class=\"h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 outline-none focus:border-[#137fec] focus:ring-2 focus:ring-[#137fec]/20\" name=\"scopes\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "\" required></label><div class=\"space-y-2\"><div class=\"flex items-center justify-between\"><span class=\"text-sm font-semibold text-slate-700\">Scopes</span> <span class=\"text-xs text-slate-500\">Select one or more permissions</span></div><div class=\"grid gap-3 sm:grid-cols-2\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var100 string
-			templ_7745c5c3_Var100, templ_7745c5c3_Err = templ.JoinStringErrs(data.Scopes)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/scheduler/pages.templ`, Line: 639, Col: 190}
+			for _, scope := range data.ScopeOptions {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<label class=\"flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-[#137fec]/40 hover:bg-white\"><input type=\"checkbox\" name=\"scopes\" value=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var100 string
+				templ_7745c5c3_Var100, templ_7745c5c3_Err = templ.JoinStringErrs(scope.Value)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/scheduler/pages.templ`, Line: 645, Col: 64}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var100))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if HasScope(data.SelectedScopes, scope.Value) {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, " checked")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, " class=\"mt-0.5 size-4 rounded border-slate-300 text-[#137fec] focus:ring-[#137fec]/30\"> <span class=\"block\"><span class=\"block text-sm font-semibold text-slate-800\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var101 string
+				templ_7745c5c3_Var101, templ_7745c5c3_Err = templ.JoinStringErrs(scope.Label)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/scheduler/pages.templ`, Line: 647, Col: 79}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var101))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "</span> <span class=\"block text-xs text-slate-500\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var102 string
+				templ_7745c5c3_Var102, templ_7745c5c3_Err = templ.JoinStringErrs(scope.Description)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/scheduler/pages.templ`, Line: 648, Col: 71}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var102))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "</span> <span class=\"mt-1 block text-[11px] font-mono text-slate-500\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var103 string
+				templ_7745c5c3_Var103, templ_7745c5c3_Err = templ.JoinStringErrs(scope.Value)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/scheduler/pages.templ`, Line: 649, Col: 84}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var103))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "</span></span></label>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var100))
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, "</div></div><label class=\"block space-y-2\"><span class=\"text-sm font-semibold text-slate-700\">Expires At (optional, RFC3339)</span> <input class=\"h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 outline-none focus:border-[#137fec] focus:ring-2 focus:ring-[#137fec]/20\" name=\"expires_at\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "\" placeholder=\"jobs:read,jobs:write,runs:read\" required></label> <label class=\"block space-y-2\"><span class=\"text-sm font-semibold text-slate-700\">Expires At (optional, RFC3339)</span> <input class=\"h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 outline-none focus:border-[#137fec] focus:ring-2 focus:ring-[#137fec]/20\" name=\"expires_at\" placeholder=\"2026-12-31T23:59:59Z\"></label><div class=\"flex items-center justify-between pt-2\"><a href=\"/ui/api-keys\" class=\"text-sm font-semibold text-slate-600 hover:text-[#137fec]\">Cancel</a> <button type=\"submit\" class=\"inline-flex h-11 items-center justify-center rounded-lg bg-[#137fec] px-5 text-sm font-semibold text-white hover:bg-[#0f72d6]\">Create Key</button></div></form></section>")
+			var templ_7745c5c3_Var104 string
+			templ_7745c5c3_Var104, templ_7745c5c3_Err = templ.JoinStringErrs(data.ExpiresAt)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/scheduler/pages.templ`, Line: 657, Col: 197}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var104))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "\" placeholder=\"2026-12-31T23:59:59Z\"></label><div class=\"flex items-center justify-between pt-2\"><a href=\"/ui/api-keys\" class=\"text-sm font-semibold text-slate-600 hover:text-[#137fec]\">Cancel</a> <button type=\"submit\" class=\"inline-flex h-11 items-center justify-center rounded-lg bg-[#137fec] px-5 text-sm font-semibold text-white hover:bg-[#0f72d6]\">Create Key</button></div></form></section>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

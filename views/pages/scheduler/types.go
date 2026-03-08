@@ -104,6 +104,10 @@ type CreateAPIKeyPageData struct {
 	Scopes string
 }
 
+type LandingPageData struct {
+	Authenticated bool
+}
+
 type AuthPageData struct {
 	Title            string
 	Subtitle         string

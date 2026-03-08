@@ -39,10 +39,9 @@ func NewHandler(jobsService *jobs.Service, runsService *runs.Service, apiKeysSer
 }
 
 func (h *Handler) Root(c echo.Context) error {
-	if auth.MustPrincipal(c).SubjectID != "" {
-		return c.Redirect(http.StatusSeeOther, "/ui/jobs")
-	}
-	return c.Redirect(http.StatusSeeOther, "/login")
+	return render(c, scheduler.LandingPage(scheduler.LandingPageData{
+		Authenticated: auth.MustPrincipal(c).SubjectID != "",
+	}))
 }
 
 func (h *Handler) RegisterPage(c echo.Context) error {

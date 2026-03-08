@@ -176,7 +176,7 @@ templ LandingPage(data LandingPageData) {
 							<span class="material-symbols-outlined text-xl">schedule</span>
 							<span class="font-bold text-slate-900">BTick Scheduler</span>
 						</div>
-						<div class="text-sm text-slate-500">© 2026 BTick Scheduler. All rights reserved.</div>
+						<div class="text-sm text-slate-500">© 2026 Brian Nunez. All rights reserved.</div>
 					</div>
 				</footer>
 			</div>
@@ -235,6 +235,9 @@ templ AuthPage(data AuthPageData) {
 templ JobsPage(data JobsPageData) {
 	@Layout(data.Title) {
 		<section class="space-y-6">
+			if data.Note != "" {
+				<div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{ data.Note }</div>
+			}
 			<div class="flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<p class="text-xs font-bold uppercase tracking-[0.18em] text-[#137fec]">Workspace</p>
@@ -253,6 +256,22 @@ templ JobsPage(data JobsPageData) {
 				</div>
 				<div id="jobs-table" hx-get="/ui/partials/jobs-table" hx-trigger="load, every 20s" hx-swap="innerHTML">
 					@JobsTable(JobsTableData{Jobs: data.Jobs})
+				</div>
+			</div>
+		</section>
+	}
+}
+
+templ JobNotFoundPage() {
+	@Layout("Job Not Found") {
+		<section class="mx-auto max-w-3xl space-y-6">
+			<div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+				<p class="text-xs font-bold uppercase tracking-[0.18em] text-[#137fec]">Job</p>
+				<h1 class="mt-2 text-4xl font-black tracking-tight text-slate-900">This job is no longer available</h1>
+				<p class="mt-4 text-base leading-relaxed text-slate-600">The job may have been deleted in another tab, or you may no longer have access to it.</p>
+				<div class="mt-8 flex flex-wrap gap-3">
+					<a href="/ui/jobs" class="inline-flex h-11 items-center justify-center rounded-lg bg-[#137fec] px-5 text-sm font-semibold text-white hover:bg-[#0f72d6]">Back to Jobs</a>
+					<a href="/ui/jobs/new" class="inline-flex h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-100">Create New Job</a>
 				</div>
 			</div>
 		</section>
@@ -304,6 +323,15 @@ templ JobsTable(data JobsTableData) {
 									</form>
 								}
 								<a class="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100" href={ fmt.Sprintf("/ui/jobs/%s/edit", job.ID) }>Edit</a>
+								<form
+									method="post"
+									action={ fmt.Sprintf("/ui/jobs/%s/delete", job.ID) }
+									hx-post={ fmt.Sprintf("/ui/jobs/%s/delete", job.ID) }
+									hx-target="#jobs-table"
+									hx-swap="innerHTML"
+								>
+									<button class="rounded-md border border-red-300 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100" type="submit">Delete</button>
+								</form>
 							</div>
 						</td>
 					</tr>
@@ -404,6 +432,9 @@ templ JobDetailPage(data JobDetailPageData) {
 					<a href={ fmt.Sprintf("/ui/jobs/%s/edit", data.Job.ID) } class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100">Edit</a>
 					<form method="post" action={ fmt.Sprintf("/ui/jobs/%s/trigger", data.Job.ID) }>
 						<button type="submit" class="inline-flex h-10 items-center justify-center rounded-lg bg-[#137fec] px-4 text-sm font-semibold text-white hover:bg-[#0f72d6]">Trigger Now</button>
+					</form>
+					<form method="post" action={ fmt.Sprintf("/ui/jobs/%s/delete", data.Job.ID) }>
+						<button type="submit" class="inline-flex h-10 items-center justify-center rounded-lg border border-red-300 bg-red-50 px-4 text-sm font-semibold text-red-700 hover:bg-red-100">Delete</button>
 					</form>
 				</div>
 			</div>

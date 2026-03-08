@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -149,6 +150,7 @@ func (h *Handler) JobsPage(c echo.Context) error {
 	return render(c, scheduler.JobsPage(scheduler.JobsPageData{
 		Title: "Scheduled Jobs",
 		Jobs:  toUIJobs(jobList),
+		Note:  jobsPageNotice(c.QueryParam("notice")),
 	}))
 }
 
@@ -204,7 +206,10 @@ func (h *Handler) EditJobPage(c echo.Context) error {
 
 	job, err := h.jobsService.Get(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
-		return c.String(http.StatusNotFound, "job not found")
+		if errors.Is(err, jobs.ErrNotFound) {
+			return renderStatus(c, http.StatusNotFound, scheduler.JobNotFoundPage())
+		}
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
 	return render(c, scheduler.JobFormPage(scheduler.JobFormPageData{
@@ -265,7 +270,10 @@ func (h *Handler) JobDetailPage(c echo.Context) error {
 
 	job, err := h.jobsService.Get(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
-		return c.String(http.StatusNotFound, "job not found")
+		if errors.Is(err, jobs.ErrNotFound) {
+			return renderStatus(c, http.StatusNotFound, scheduler.JobNotFoundPage())
+		}
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
 	runsList, _ := h.runsService.ListByJob(c.Request().Context(), auth.MustPrincipal(c), job.ID, 20)
@@ -284,7 +292,10 @@ func (h *Handler) JobRunsPage(c echo.Context) error {
 
 	job, err := h.jobsService.Get(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
-		return c.String(http.StatusNotFound, "job not found")
+		if errors.Is(err, jobs.ErrNotFound) {
+			return renderStatus(c, http.StatusNotFound, scheduler.JobNotFoundPage())
+		}
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
 	runsList, err := h.runsService.ListByJob(c.Request().Context(), auth.MustPrincipal(c), jobID, 200)
@@ -319,6 +330,9 @@ func (h *Handler) PauseJob(c echo.Context) error {
 	}
 	_, err = h.jobsService.Pause(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
+		if errors.Is(err, jobs.ErrNotFound) {
+			return c.Redirect(http.StatusSeeOther, "/ui/jobs?notice=job-not-found")
+		}
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	if isHTMX(c) {
@@ -334,6 +348,9 @@ func (h *Handler) ResumeJob(c echo.Context) error {
 	}
 	_, err = h.jobsService.Resume(c.Request().Context(), auth.MustPrincipal(c), jobID)
 	if err != nil {
+		if errors.Is(err, jobs.ErrNotFound) {
+			return c.Redirect(http.StatusSeeOther, "/ui/jobs?notice=job-not-found")
+		}
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	if isHTMX(c) {
@@ -348,12 +365,32 @@ func (h *Handler) TriggerJob(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "invalid job id")
 	}
 	if err := h.jobsService.Trigger(c.Request().Context(), auth.MustPrincipal(c), jobID); err != nil {
+		if errors.Is(err, jobs.ErrNotFound) {
+			return c.Redirect(http.StatusSeeOther, "/ui/jobs?notice=job-not-found")
+		}
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	if isHTMX(c) {
 		return h.JobsTablePartial(c)
 	}
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/ui/jobs/%s", jobID))
+}
+
+func (h *Handler) DeleteJob(c echo.Context) error {
+	jobID, err := uuid.Parse(c.Param("jobId"))
+	if err != nil {
+		return c.String(http.StatusBadRequest, "invalid job id")
+	}
+	if err := h.jobsService.Delete(c.Request().Context(), auth.MustPrincipal(c), jobID); err != nil {
+		if errors.Is(err, jobs.ErrNotFound) {
+			return c.Redirect(http.StatusSeeOther, "/ui/jobs?notice=job-not-found")
+		}
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+	if isHTMX(c) {
+		return h.JobsTablePartial(c)
+	}
+	return c.Redirect(http.StatusSeeOther, "/ui/jobs")
 }
 
 func (h *Handler) APIKeysPage(c echo.Context) error {
@@ -744,7 +781,22 @@ func apiKeyScopeOptions() []scheduler.ScopeOption {
 	}
 }
 
+func jobsPageNotice(code string) string {
+	switch strings.TrimSpace(code) {
+	case "job-not-found":
+		return "That job was already deleted or is no longer available."
+	default:
+		return ""
+	}
+}
+
 func render(c echo.Context, component templ.Component) error {
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTMLCharsetUTF8)
+	return component.Render(context.Background(), c.Response().Writer)
+}
+
+func renderStatus(c echo.Context, status int, component templ.Component) error {
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTMLCharsetUTF8)
+	c.Response().WriteHeader(status)
 	return component.Render(context.Background(), c.Response().Writer)
 }

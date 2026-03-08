@@ -46,6 +46,7 @@ func RegisterRoutes(e *echo.Echo, dependencies Dependencies) {
 	protectedUI.POST("/ui/jobs/:jobId/pause", uiHandler.PauseJob)
 	protectedUI.POST("/ui/jobs/:jobId/resume", uiHandler.ResumeJob)
 	protectedUI.POST("/ui/jobs/:jobId/trigger", uiHandler.TriggerJob)
+	protectedUI.POST("/ui/jobs/:jobId/delete", uiHandler.DeleteJob)
 	protectedUI.GET("/ui/jobs/:jobId/runs", uiHandler.JobRunsPage)
 	protectedUI.GET("/ui/runs/:runId", uiHandler.RunDetailPage)
 	protectedUI.GET("/ui/api-keys", uiHandler.APIKeysPage)

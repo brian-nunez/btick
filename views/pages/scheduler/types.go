@@ -65,6 +65,7 @@ type UIAPIKey struct {
 type JobsPageData struct {
 	Title string
 	Jobs  []UIJob
+	Note  string
 }
 
 type JobsTableData struct {

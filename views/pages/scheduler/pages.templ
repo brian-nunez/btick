@@ -198,12 +198,18 @@ templ AuthPage(data AuthPageData) {
 		<body class="min-h-full bg-slate-50 text-slate-900 antialiased [font-family:Inter,sans-serif]">
 			<div class="auth-shell">
 				<div class="auth-card">
-					<div class="mb-8 text-center">
+					<div class="mb-4 text-center">
 						<div class="auth-logo">
 							<span class="material-symbols-outlined">schedule</span>
 						</div>
 						<h1 class="auth-title">{ data.Title }</h1>
 						<p class="auth-subtitle">{ data.Subtitle }</p>
+					</div>
+					<div class="mt-1 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600 text-center mb-8">
+						<span class="font-medium text-slate-700">Demo account</span>
+						<div class="mt-1 font-mono text-slate-800">
+							demo@bjnunez.com / password123
+						</div>
 					</div>
 					if data.Error != "" {
 						<div class="auth-error">{ data.Error }</div>

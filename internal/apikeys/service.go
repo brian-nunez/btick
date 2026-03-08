@@ -220,7 +220,12 @@ func generateRawKey() (rawKey string, keyPrefix string, keyHash string, err erro
 }
 
 func parseKeyPrefix(rawKey string) (string, error) {
-	parts := strings.Split(rawKey, "_")
+	trimmed := strings.TrimSpace(rawKey)
+	if trimmed == "" {
+		return "", fmt.Errorf("invalid api key format")
+	}
+
+	parts := strings.SplitN(trimmed, "_", 3)
 	if len(parts) != 3 {
 		return "", fmt.Errorf("invalid api key format")
 	}

@@ -1,21 +1,62 @@
 services:
   db:
-    image: postgres
+    image: postgres:18.3
     restart: always
-    # set shared memory limit when using docker compose
     shm_size: 128mb
     ports:
-      - 5432:5432
+      - "5432:5432"
     environment:
       POSTGRES_PASSWORD: btick
       POSTGRES_USER: btick
       POSTGRES_DB: btick
       PGDATA: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U btick -d btick"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     volumes:
       - ./db:/var/lib/postgresql/data
+
+  scheduler-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://btick:btick@db:5432/btick?sslmode=disable
+      PORT: "8080"
+      STATIC_ASSETS_PATH: /app/assets
+      UI_SESSION_SECRET: change-me-in-production
+      UI_SESSION_TTL_HOURS: "12"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  scheduler-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://btick:btick@db:5432/btick?sslmode=disable
+      WORKER_ID: scheduler-worker-1
+      WORKER_CONCURRENCY: "4"
+      WORKER_POLL_INTERVAL_MS: "2000"
+      WORKER_STALE_CLAIM_MINUTES: "5"
+      WORKER_MAX_CLAIMS_PER_TICK: "20"
+      WORKER_HTTP_TIMEOUT_SECONDS: "90"
+      WORKER_TASK_LOG_PATH: /app/logs/tasks
+      WORKER_TASK_STATE_DB_PATH: /app/data/task_orchestration.db
+    depends_on:
+      db:
+        condition: service_healthy
 
   adminer:
     image: adminer
     restart: always
     ports:
-      - 8010:8080
+      - "8010:8080"
+

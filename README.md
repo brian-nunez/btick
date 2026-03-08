@@ -96,6 +96,40 @@ go run ./cmd/scheduler-worker
 
 Migrations run automatically on startup.
 
+## Run with Docker Compose
+
+Build and run Postgres + API + worker:
+
+```bash
+docker compose up --build
+```
+
+Services:
+
+- Scheduler API: `http://localhost:8080`
+- Scheduler Worker: separate container (`scheduler-worker`)
+- Adminer: `http://localhost:8010`
+- Postgres: `localhost:5432` (`btick` / `btick` / `btick`)
+
+Notes:
+
+- Both API and worker run migrations on startup.
+- Update `UI_SESSION_SECRET` in [`compose.yml`](./compose.yml) before production use.
+
+## Build Container Images
+
+Build API image:
+
+```bash
+docker build -f Dockerfile.api -t btick-scheduler-api:local .
+```
+
+Build worker image:
+
+```bash
+docker build -f Dockerfile.worker -t btick-scheduler-worker:local .
+```
+
 ## API Endpoints
 
 Health:

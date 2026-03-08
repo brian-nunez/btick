@@ -1,0 +1,14 @@
+.git
+.gitignore
+.github
+.vscode
+.DS_Store
+
+tmp
+db
+logs
+data
+
+node_modules
+coverage
+*.log

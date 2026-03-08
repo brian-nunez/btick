@@ -1,0 +1,42 @@
+FROM golang:1.25-bookworm AS builder
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  go mod download
+
+COPY . .
+
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+
+RUN --mount=type=cache,target=/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+  go build -trimpath -ldflags='-s -w' -o /out/scheduler-worker ./cmd/scheduler-worker
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  tzdata \
+  && rm -rf /var/lib/apt/lists/* \
+  && groupadd --gid 10001 app \
+  && useradd --uid 10001 --gid app --shell /usr/sbin/nologin --create-home app
+
+WORKDIR /app
+
+COPY --from=builder /out/scheduler-worker /usr/local/bin/scheduler-worker
+COPY --from=builder /src/migrations ./migrations
+
+RUN mkdir -p /app/data /app/logs /home/app/.cache \
+  && chown -R app:app /app /home/app
+
+ENV WORKER_TASK_LOG_PATH=/app/logs/tasks \
+  WORKER_TASK_STATE_DB_PATH=/app/data/task_orchestration.db
+
+USER app
+
+ENTRYPOINT ["/usr/local/bin/scheduler-worker"]
